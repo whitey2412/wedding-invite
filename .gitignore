@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.netlify/
+*.local
+.claude/
+
+# Node binaries bundled in project root
+node.exe
+npm
+npm.cmd
+npm.ps1
+npx
+npx.ps1
+npx.cmd
+corepack
+corepack.cmd
+nodevars.bat
+install_tools.bat

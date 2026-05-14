@@ -131,7 +131,9 @@ export default function WeddingInvite() {
   }]);
   const [chatInput, setChatInput]     = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [rsvp, setRsvp]               = useState({ name: "", attending: "yes", dietary: "" });
+  const [inviteCode]                  = useState(() => new URLSearchParams(window.location.search).get("invite") || "");
+  const [guestRecord, setGuestRecord] = useState(() => new URLSearchParams(window.location.search).get("invite") ? null : false);
+  const [rsvp, setRsvp]               = useState({ p1_attending: "yes", p1_dietary: "", p2_attending: "yes", p2_dietary: "" });
   const [rsvpStep, setRsvpStep]       = useState("form");
   const [poem, setPoem]               = useState("");
   const [faqOpen, setFaqOpen]         = useState(null);
@@ -191,6 +193,17 @@ export default function WeddingInvite() {
     return () => clearInterval(t);
   }, [sheetData]);
 
+  // ── Guest lookup by invite code ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!inviteCode) return;
+    fetchSheet("rsvps").then(rows => {
+      const idx = rows.findIndex(r => r.invite_code?.trim() === inviteCode.trim());
+      if (idx === -1) { setGuestRecord(false); return; }
+      const r = rows[idx];
+      setGuestRecord({ p1_name: r.p1_name || "", p2_name: r.p2_name || "", row_index: idx + 2 });
+    }).catch(() => setGuestRecord(false));
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatLoading]);
@@ -226,22 +239,45 @@ export default function WeddingInvite() {
     setChatLoading(false);
   };
 
-  // ── RSVP poem ─────────────────────────────────────────────────────────────────
+  // ── RSVP submit ───────────────────────────────────────────────────────────────
   const submitRsvp = async () => {
-    if (!rsvp.name.trim()) return;
+    if (!guestRecord) return;
     setRsvpStep("loading");
 
     fetch("/api/rsvp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: rsvp.name, attending: rsvp.attending, dietary: rsvp.dietary }),
+      body: JSON.stringify({
+        invite_code:  inviteCode,
+        row_index:    guestRecord.row_index,
+        p1_attending: rsvp.p1_attending,
+        p1_dietary:   rsvp.p1_dietary,
+        p2_attending: guestRecord.p2_name ? rsvp.p2_attending : "",
+        p2_dietary:   guestRecord.p2_name ? rsvp.p2_dietary   : "",
+      }),
     }).catch(() => {});
 
-    const facts = context.map(r => r.fact).join("; ");
-    const yes = rsvp.attending === "yes";
-    const prompt = yes
-      ? `Write a warm, funny 4-line rhyming poem welcoming ${rsvp.name} to ${details.partner1} & ${details.partner2}'s wedding at ${details.venue_name} on ${details.date_display}. Draw from these facts: ${facts}. Celebratory.${rsvp.dietary ? ` Dietary note: ${rsvp.dietary}.` : ""} Return only the poem.`
-      : `Write a warm, funny 4-line rhyming poem for ${rsvp.name} who sadly cannot attend ${details.partner1} & ${details.partner2}'s wedding. Draw from: ${facts}. Sweet and sympathetic. Return only the poem.`;
+    const facts  = context.map(r => r.fact).join("; ");
+    const guests = [
+      { name: guestRecord.p1_name, attending: rsvp.p1_attending === "yes", dietary: rsvp.p1_dietary },
+      ...(guestRecord.p2_name ? [{ name: guestRecord.p2_name, attending: rsvp.p2_attending === "yes", dietary: rsvp.p2_dietary }] : []),
+    ];
+    const allYes  = guests.every(g => g.attending);
+    const allNo   = guests.every(g => !g.attending);
+    const nameStr = guests.length === 1 ? guests[0].name : `${guests[0].name} and ${guests[1].name}`;
+    const dietary = guests.filter(g => g.attending && g.dietary).map(g => `${g.name}: ${g.dietary}`).join("; ");
+
+    let prompt;
+    if (allYes) {
+      prompt = `Write a warm, funny 4-line rhyming poem welcoming ${nameStr} to ${details.partner1} & ${details.partner2}'s wedding at ${details.venue_name} on ${details.date_display}. Draw from these facts: ${facts}. Celebratory.${dietary ? ` Dietary notes: ${dietary}.` : ""} Return only the poem.`;
+    } else if (allNo) {
+      prompt = `Write a warm, funny 4-line rhyming poem for ${nameStr} who sadly cannot attend ${details.partner1} & ${details.partner2}'s wedding. Draw from: ${facts}. Sweet and sympathetic. Return only the poem.`;
+    } else {
+      const yes = guests.filter(g =>  g.attending).map(g => g.name).join(" and ");
+      const no  = guests.filter(g => !g.attending).map(g => g.name).join(" and ");
+      prompt = `Write a warm, funny 4-line rhyming poem: ${yes} will celebrate at ${details.partner1} & ${details.partner2}'s wedding but ${no} sadly cannot make it. Draw from: ${facts}. Bittersweet but warm. Return only the poem.`;
+    }
+
     try {
       const res = await fetch("/api/anthropic/v1/messages", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -418,36 +454,71 @@ export default function WeddingInvite() {
         }}>
           <Botanical pos="topLeft" />
 
-          {rsvpStep === "form" && (
+          {/* No invite code */}
+          {!inviteCode && (
+            <div style={{ textAlign: "center", maxWidth: 360 }}>
+              <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 20px", lineHeight: 1.05 }}>Your invitation</h2>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 14, opacity: 0.72, lineHeight: 1.8 }}>
+                Use the QR code on your invitation or the personal link you were sent to RSVP.
+              </p>
+            </div>
+          )}
+
+          {/* Looking up invite code */}
+          {inviteCode && guestRecord === null && (
+            <p style={{ fontStyle: "italic", fontWeight: 300, fontSize: 16, opacity: 0.55 }}>Finding your invitation...</p>
+          )}
+
+          {/* Code not found */}
+          {inviteCode && guestRecord === false && (
+            <div style={{ textAlign: "center", maxWidth: 360 }}>
+              <h2 style={{ fontSize: "clamp(32px,8vw,48px)", fontWeight: 300, margin: "0 0 16px", lineHeight: 1.05 }}>Hmm...</h2>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 14, opacity: 0.72, lineHeight: 1.8 }}>
+                We couldn't find this invitation — double-check the QR code or link from your invitation.
+              </p>
+            </div>
+          )}
+
+          {/* Form */}
+          {rsvpStep === "form" && guestRecord && (
             <div style={{ width: "100%", maxWidth: 400 }}>
               <p style={{ fontStyle: "italic", opacity: 0.65, margin: "0 0 6px", fontSize: 15, fontWeight: 300 }}>kindly reply</p>
-              <h2 style={{ fontSize: "clamp(38px, 10vw, 60px)", fontWeight: 300, margin: "0 0 38px", lineHeight: 1.05 }}>
+              <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 36px", lineHeight: 1.05 }}>
                 Will you join us?
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <input value={rsvp.name} onChange={e => setRsvp({...rsvp, name: e.target.value})} placeholder="Your full name" style={INPUT} />
-                <div style={{ display: "flex", gap: 10 }}>
-                  {[["yes","Joyfully accepts"],["no","Regretfully declines"]].map(([val, label]) => (
-                    <button key={val} className="rsvp-opt" onClick={() => setRsvp({...rsvp, attending: val})} style={{
-                      flex: 1, background: rsvp.attending === val ? "rgba(245,237,224,0.18)" : "transparent",
-                      border: `1px solid ${rsvp.attending === val ? CREAM : "rgba(245,237,224,0.28)"}`,
-                      color: CREAM, fontFamily: "'Jost',sans-serif", fontWeight: 300,
-                      letterSpacing: "0.06em", fontSize: 12, padding: "13px 10px",
-                      cursor: "pointer", borderRadius: 4, transition: "all 0.2s",
-                    }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {rsvp.attending === "yes" && (
-                  <input value={rsvp.dietary} onChange={e => setRsvp({...rsvp, dietary: e.target.value})} placeholder="Dietary requirements (optional)" style={INPUT} />
-                )}
-                <button onClick={submitRsvp} disabled={!rsvp.name.trim()} style={{
+              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {[
+                  { name: guestRecord.p1_name, aKey: "p1_attending", dKey: "p1_dietary" },
+                  ...(guestRecord.p2_name ? [{ name: guestRecord.p2_name, aKey: "p2_attending", dKey: "p2_dietary" }] : []),
+                ].map(({ name, aKey, dKey }) => (
+                  <div key={aKey}>
+                    <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.55, margin: "0 0 12px" }}>
+                      {name}
+                    </p>
+                    <div style={{ display: "flex", gap: 10, marginBottom: rsvp[aKey] === "yes" ? 10 : 0 }}>
+                      {[["yes","Joyfully accepts"],["no","Regretfully declines"]].map(([val, label]) => (
+                        <button key={val} className="rsvp-opt" onClick={() => setRsvp({ ...rsvp, [aKey]: val })} style={{
+                          flex: 1, background: rsvp[aKey] === val ? "rgba(245,237,224,0.18)" : "transparent",
+                          border: `1px solid ${rsvp[aKey] === val ? CREAM : "rgba(245,237,224,0.28)"}`,
+                          color: CREAM, fontFamily: "'Jost',sans-serif", fontWeight: 300,
+                          letterSpacing: "0.06em", fontSize: 12, padding: "13px 10px",
+                          cursor: "pointer", borderRadius: 4, transition: "all 0.2s",
+                        }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {rsvp[aKey] === "yes" && (
+                      <input value={rsvp[dKey]} onChange={e => setRsvp({ ...rsvp, [dKey]: e.target.value })}
+                        placeholder="Dietary requirements (optional)" style={INPUT} />
+                    )}
+                  </div>
+                ))}
+                <button onClick={submitRsvp} style={{
                   background: "transparent", border: `1px solid ${CREAM}`, color: CREAM,
                   fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.18em",
                   fontSize: 11, textTransform: "uppercase", padding: "14px",
-                  cursor: rsvp.name.trim() ? "pointer" : "not-allowed",
-                  opacity: rsvp.name.trim() ? 1 : 0.38, marginTop: 6, transition: "opacity 0.2s",
+                  cursor: "pointer", marginTop: 6,
                 }}>
                   Send RSVP
                 </button>
@@ -465,14 +536,20 @@ export default function WeddingInvite() {
           {rsvpStep === "poem" && (
             <div className="fade-up" style={{ textAlign: "center", maxWidth: 420 }}>
               <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.55, marginBottom: 24 }}>
-                {rsvp.attending === "yes" ? "See you in the Yarra Valley 🌿" : "You'll be greatly missed 🐾"}
+                {(() => {
+                  const attending = [rsvp.p1_attending === "yes", guestRecord?.p2_name && rsvp.p2_attending === "yes"].filter(Boolean).length;
+                  const total     = guestRecord?.p2_name ? 2 : 1;
+                  if (attending === total) return "See you in the Yarra Valley 🌿";
+                  if (attending === 0)     return "You'll be greatly missed 🐾";
+                  return "See some of you there 🌿";
+                })()}
               </p>
               <div style={{ fontSize: "clamp(17px, 3.5vw, 21px)", fontWeight: 300, lineHeight: 1.85, fontStyle: "italic", whiteSpace: "pre-line" }}>
                 {poem}
               </div>
               <div style={{ width: 44, height: 1, background: CREAM, opacity: 0.28, margin: "32px auto" }} />
               <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.1em", opacity: 0.45, textTransform: "uppercase" }}>
-                {details.partner1} &amp; {details.partner2} · {details.date_display}
+                {[guestRecord?.p1_name, guestRecord?.p2_name].filter(Boolean).join(" & ")} · {details.date_display}
               </p>
               <button onClick={() => setTab("chat")} style={{
                 marginTop: 28, background: "none", border: "none", color: CREAM,

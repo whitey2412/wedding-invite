@@ -6,7 +6,7 @@ export default async function handler(req) {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
   try {
-    const { name, attending, dietary } = await req.json();
+    const { row_index, p1_attending, p1_dietary, p2_attending, p2_dietary } = await req.json();
 
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
     const auth = new GoogleAuth({
@@ -17,13 +17,24 @@ export default async function handler(req) {
     const { token } = await client.getAccessToken();
 
     const timestamp = new Date().toLocaleString("en-AU", { timeZone: "Australia/Melbourne" });
+    const range = `rsvps!D${row_index}:H${row_index}`;
 
     const res = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/rsvps!A:D:append?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
       {
-        method: "POST",
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ values: [[timestamp, name, attending === "yes" ? "Attending" : "Declined", dietary || ""]] }),
+        body: JSON.stringify({
+          range,
+          majorDimension: "ROWS",
+          values: [[
+            p1_attending === "yes" ? "Attending" : "Declined",
+            p1_dietary || "",
+            p2_attending ? (p2_attending === "yes" ? "Attending" : "Declined") : "",
+            p2_dietary || "",
+            timestamp,
+          ]],
+        }),
       }
     );
 

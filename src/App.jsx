@@ -151,7 +151,7 @@ export default function WeddingInvite() {
     ]).then(([detailsRows, faqs, context]) => {
       const details = Object.fromEntries(detailsRows.map(r => [r.key, r.value]));
       setSheetData({ details, faqs, context });
-    }).catch(err => console.warn("Sheet fetch failed, using fallback:", err));
+    }).catch(err => { console.warn("Sheet fetch failed, using fallback:", err); setSheetData({}); });
   }, []);
 
   // ── Countdown ─────────────────────────────────────────────────────────────────
@@ -297,6 +297,10 @@ export default function WeddingInvite() {
   );
 
   // ── Render ────────────────────────────────────────────────────────────────────
+  if (sheetData === null) return (
+    <div style={{ background: TERRA, minHeight: "100vh" }} />
+  );
+
   return (
     <div style={{ background: TERRA, minHeight: "100vh", fontFamily: "'Cormorant Garamond', Georgia, serif", color: CREAM }}>
 

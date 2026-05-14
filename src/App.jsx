@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 
-// ─── PASTE YOUR GOOGLE SHEET ID HERE ──────────────────────────────────────────
-const SHEET_ID = "1zbf88gIdxoCO1JGdpkCQE8zwcWI3f3hjr1A5Yap565s";
-// ──────────────────────────────────────────────────────────────────────────────
-
 const CREAM = "#F5EDE0";
 const TERRA = "#C4714A";
 
@@ -25,8 +21,7 @@ const parseCSV = text => {
 };
 
 const fetchSheet = async name => {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${name}&_=${Date.now()}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(name)}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Sheet "${name}" not found`);
   return parseCSV(await res.text());
 };

@@ -14,3 +14,8 @@
   from = "/api/rsvp"
   to = "/.netlify/functions/rsvp"
   status = 200
+
+[[redirects]]
+  from = "/api/sheets"
+  to = "/.netlify/functions/sheets"
+  status = 200

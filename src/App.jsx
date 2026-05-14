@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
 const CREAM = "#F5EDE0";
 const TERRA = "#C4714A";
@@ -10,25 +10,6 @@ const fetchSheet = async name => {
   if (rows.length < 2) return [];
   const headers = rows[0].map(h => String(h).trim());
   return rows.slice(1).map(row => Object.fromEntries(headers.map((h, i) => [h, row[i] ?? ""])));
-};
-
-const buildSystemPrompt = (details, context) => {
-  const facts = context.map(r => `• ${r.fact}`).join("\n");
-  return `You are the Wedding Butler — warm, charming, and just a little cheeky. You're ${details.partner1} and ${details.partner2}'s deeply informed best friend who's had one glass of something nice.
-
-WEDDING DETAILS:
-• Couple: ${details.partner1} & ${details.partner2}
-• Date: ${details.date_display}, ${details.time_display}
-• Venue: ${details.venue_name}, ${details.venue_location}
-• Dress code: ${details.dress_code}
-
-ABOUT THE COUPLE & EVENT:
-${facts}
-
-YOUR STYLE:
-• Keep replies to 2–3 sentences max
-• Playful, never stuffy
-• If unsure of something, say "I'll check with the couple"`;
 };
 
 const FALLBACK = {
@@ -106,19 +87,12 @@ export default function WeddingInvite() {
   const [tab, setTab]                 = useState("invite");
   const [timeLeft, setTimeLeft]       = useState({});
   const [sheetData, setSheetData]     = useState(null);
-  const [messages, setMessages]       = useState([{
-    role: "assistant",
-    content: "G'day! I'm the Wedding Butler 🐾 Ask me anything — dress code, the venue, whether Reggie will be there (yes, obviously, and he's very excited).",
-  }]);
-  const [chatInput, setChatInput]     = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
   const [inviteCode]                  = useState(() => new URLSearchParams(window.location.search).get("invite") || "");
   const [guestRecord, setGuestRecord] = useState(() => new URLSearchParams(window.location.search).get("invite") ? null : false);
   const [rsvp, setRsvp]               = useState({ p1_attending: "yes", p1_dietary: "", p2_attending: "yes", p2_dietary: "" });
   const [rsvpStep, setRsvpStep]       = useState("form");
   const [poem, setPoem]               = useState("");
   const [faqOpen, setFaqOpen]         = useState(null);
-  const chatEndRef                    = useRef(null);
 
   // ── Fonts + CSS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -184,40 +158,10 @@ export default function WeddingInvite() {
     }).catch(() => setGuestRecord(false));
   }, []);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatLoading]);
-
   // ── Derived data ──────────────────────────────────────────────────────────────
-  const details   = sheetData?.details  ?? FALLBACK.details;
-  const faqs      = sheetData?.faqs     ?? FALLBACK.faqs;
-  const context   = sheetData?.context  ?? FALLBACK.context;
-  const sysPrompt = buildSystemPrompt(details, context);
-
-  // ── Chat ──────────────────────────────────────────────────────────────────────
-  const sendChat = async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    const userMsg = { role: "user", content: chatInput.trim() };
-    const updated = [...messages, userMsg];
-    setMessages(updated);
-    setChatInput("");
-    setChatLoading(true);
-    try {
-      const res = await fetch("/api/anthropic/v1/messages", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 1000,
-          system: sysPrompt,
-          messages: updated.map(m => ({ role: m.role, content: m.content })),
-        }),
-      });
-      const data = await res.json();
-      setMessages([...updated, { role: "assistant", content: data.content?.[0]?.text || "One moment..." }]);
-    } catch {
-      setMessages([...updated, { role: "assistant", content: "The champagne went to my circuits — try again!" }]);
-    }
-    setChatLoading(false);
-  };
+  const details = sheetData?.details ?? FALLBACK.details;
+  const faqs    = sheetData?.faqs    ?? FALLBACK.faqs;
+  const context = sheetData?.context ?? FALLBACK.context;
 
   // ── RSVP submit ───────────────────────────────────────────────────────────────
   const submitRsvp = async () => {
@@ -281,7 +225,7 @@ export default function WeddingInvite() {
       justifyContent: "center", background: "rgba(150,80,45,0.88)",
       backdropFilter: "blur(12px)", borderTop: "1px solid rgba(245,237,224,0.12)", zIndex: 100,
     }}>
-      {[["invite","Invite"],["chat","Butler"],["rsvp","RSVP"],["faq","FAQs"]].map(([t, label]) => (
+      {[["invite","Invite"],["rsvp","RSVP"],["faq","FAQs"]].map(([t, label]) => (
         <button key={t} className="tab-btn" onClick={() => setTab(t)} style={{
           flex: 1, maxWidth: 120, background: "transparent", border: "none", color: CREAM,
           fontFamily: "'Jost', sans-serif", fontWeight: 400, letterSpacing: "0.14em",
@@ -350,82 +294,17 @@ export default function WeddingInvite() {
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-            <button className="cta-btn" onClick={() => setTab("rsvp")} style={{
-              background: "transparent", border: `1px solid ${CREAM}`, color: CREAM,
-              fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.2em",
-              fontSize: 11, textTransform: "uppercase", padding: "13px 44px", cursor: "pointer",
-            }}>
-              RSVP
-            </button>
-            <button onClick={() => setTab("chat")} style={{
-              background: "transparent", border: "none", color: CREAM,
-              fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.1em",
-              fontSize: 11, textTransform: "uppercase", opacity: 0.6, cursor: "pointer",
-              textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 5,
-            }}>
-              Chat with the Wedding Butler
-            </button>
-          </div>
+          <button className="cta-btn" onClick={() => setTab("rsvp")} style={{
+            background: "transparent", border: `1px solid ${CREAM}`, color: CREAM,
+            fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.2em",
+            fontSize: 11, textTransform: "uppercase", padding: "13px 44px", cursor: "pointer",
+          }}>
+            RSVP
+          </button>
 
           <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.1em", fontSize: 10, opacity: 0.42, marginTop: 52, textTransform: "uppercase" }}>
             {details.dress_code}
           </p>
-        </div>
-      )}
-
-      {/* ── CHAT ── */}
-      {tab === "chat" && (
-        <div className="fade-up" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", maxWidth: 580, margin: "0 auto" }}>
-          <div style={{ padding: "32px 24px 18px", borderBottom: "1px solid rgba(245,237,224,0.12)", position: "relative", overflow: "hidden" }}>
-            <Botanical pos="topRight" />
-            <h2 style={{ margin: 0, fontWeight: 300, fontSize: 32, lineHeight: 1 }}>Wedding Butler</h2>
-            <p style={{ margin: "6px 0 0", fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 300, opacity: 0.52, letterSpacing: "0.06em" }}>
-              Powered by Claude · Knows all the things
-            </p>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", padding: "22px 24px", display: "flex", flexDirection: "column", gap: 12, paddingBottom: 110 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{
-                alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-                maxWidth: "80%",
-                background: m.role === "user" ? "rgba(245,237,224,0.16)" : "rgba(0,0,0,0.16)",
-                borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                padding: "11px 15px", fontSize: 15, lineHeight: 1.58, fontWeight: 300,
-                animation: "fadeUp 0.3s ease",
-              }}>
-                {m.content}
-              </div>
-            ))}
-            {chatLoading && (
-              <div style={{ alignSelf: "flex-start", background: "rgba(0,0,0,0.16)", borderRadius: "18px 18px 18px 4px", padding: "11px 18px", animation: "pulse 1.2s infinite", fontSize: 18, opacity: 0.6 }}>···</div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div style={{
-            position: "fixed", bottom: 48, left: "50%", transform: "translateX(-50%)",
-            width: "100%", maxWidth: 580, padding: "14px 20px",
-            background: "rgba(150,80,45,0.88)", backdropFilter: "blur(12px)",
-            borderTop: "1px solid rgba(245,237,224,0.1)", display: "flex", gap: 10,
-          }}>
-            <input
-              value={chatInput} onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && sendChat()}
-              placeholder="Ask anything about the day..."
-              style={{ ...INPUT, flex: 1 }}
-            />
-            <button onClick={sendChat} disabled={chatLoading || !chatInput.trim()} style={{
-              background: "rgba(245,237,224,0.14)", border: "1px solid rgba(245,237,224,0.2)",
-              color: CREAM, borderRadius: 4, padding: "0 20px", cursor: "pointer",
-              fontFamily: "'Jost',sans-serif", fontSize: 11, letterSpacing: "0.1em",
-              textTransform: "uppercase", opacity: chatLoading || !chatInput.trim() ? 0.35 : 1,
-              transition: "opacity 0.2s", whiteSpace: "nowrap",
-            }}>
-              Send
-            </button>
-          </div>
         </div>
       )}
 
@@ -512,7 +391,7 @@ export default function WeddingInvite() {
 
           {rsvpStep === "loading" && (
             <div style={{ textAlign: "center" }}>
-              <p style={{ fontSize: 19, fontWeight: 300, fontStyle: "italic", opacity: 0.75 }}>The butler is composing something just for you...</p>
+              <p style={{ fontSize: 19, fontWeight: 300, fontStyle: "italic", opacity: 0.75 }}>Composing something just for you...</p>
               <p style={{ fontSize: 26, animation: "pulse 1.4s infinite", marginTop: 12 }}>🌿</p>
             </div>
           )}
@@ -535,14 +414,6 @@ export default function WeddingInvite() {
               <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.1em", opacity: 0.45, textTransform: "uppercase" }}>
                 {[guestRecord?.p1_name, guestRecord?.p2_name].filter(Boolean).join(" & ")} · {details.date_display}
               </p>
-              <button onClick={() => setTab("chat")} style={{
-                marginTop: 28, background: "none", border: "none", color: CREAM,
-                fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.12em",
-                textTransform: "uppercase", cursor: "pointer", opacity: 0.55,
-                textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: 4,
-              }}>
-                Chat with the Wedding Butler
-              </button>
             </div>
           )}
         </div>
@@ -595,19 +466,6 @@ export default function WeddingInvite() {
                 </div>
               );
             })}
-          </div>
-
-          <div style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid rgba(245,237,224,0.12)" }}>
-            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 12, opacity: 0.55, lineHeight: 1.7, marginBottom: 16 }}>
-              Still have a question? Chat with the Wedding Butler — he knows everything.
-            </p>
-            <button onClick={() => setTab("chat")} style={{
-              background: "transparent", border: `1px solid rgba(245,237,224,0.4)`, color: CREAM,
-              fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.18em",
-              fontSize: 10, textTransform: "uppercase", padding: "12px 28px", cursor: "pointer",
-            }}>
-              Ask the Butler
-            </button>
           </div>
         </div>
       )}

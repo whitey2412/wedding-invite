@@ -158,7 +158,6 @@ export default function WeddingInvite() {
 
   // ── Fetch Google Sheets ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (SHEET_ID === "YOUR_GOOGLE_SHEET_ID_HERE") return;
     Promise.all([
       fetchSheet("details"),
       fetchSheet("faqs"),

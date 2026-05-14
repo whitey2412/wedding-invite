@@ -9,3 +9,8 @@
   from = "/api/anthropic/*"
   to = "/.netlify/functions/anthropic-proxy"
   status = 200
+
+[[redirects]]
+  from = "/api/rsvp"
+  to = "/.netlify/functions/rsvp"
+  status = 200

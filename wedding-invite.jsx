@@ -25,8 +25,8 @@ const parseCSV = text => {
 };
 
 const fetchSheet = async name => {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${name}&_=${Date.now()}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${name}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Sheet "${name}" not found`);
   return parseCSV(await res.text());
 };
@@ -210,7 +210,7 @@ export default function WeddingInvite() {
     setChatInput("");
     setChatLoading(true);
     try {
-      const res = await fetch("/api/anthropic/v1/messages", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514", max_tokens: 1000,
@@ -230,20 +230,13 @@ export default function WeddingInvite() {
   const submitRsvp = async () => {
     if (!rsvp.name.trim()) return;
     setRsvpStep("loading");
-
-    fetch("/api/rsvp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: rsvp.name, attending: rsvp.attending, dietary: rsvp.dietary }),
-    }).catch(() => {});
-
     const facts = context.map(r => r.fact).join("; ");
     const yes = rsvp.attending === "yes";
     const prompt = yes
       ? `Write a warm, funny 4-line rhyming poem welcoming ${rsvp.name} to ${details.partner1} & ${details.partner2}'s wedding at ${details.venue_name} on ${details.date_display}. Draw from these facts: ${facts}. Celebratory.${rsvp.dietary ? ` Dietary note: ${rsvp.dietary}.` : ""} Return only the poem.`
       : `Write a warm, funny 4-line rhyming poem for ${rsvp.name} who sadly cannot attend ${details.partner1} & ${details.partner2}'s wedding. Draw from: ${facts}. Sweet and sympathetic. Return only the poem.`;
     try {
-      const res = await fetch("/api/anthropic/v1/messages", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514", max_tokens: 1000,

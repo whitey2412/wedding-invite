@@ -3,27 +3,13 @@ import { useState, useEffect, useRef } from "react";
 const CREAM = "#F5EDE0";
 const TERRA = "#C4714A";
 
-// Minimal CSV parser — handles quoted fields with commas inside
-const parseCSV = text => {
-  const lines = text.trim().split("\n");
-  const headers = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
-  return lines.slice(1).map(line => {
-    const values = [];
-    let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      if (line[i] === '"') { inQ = !inQ; continue; }
-      if (line[i] === "," && !inQ) { values.push(cur.trim()); cur = ""; }
-      else cur += line[i];
-    }
-    values.push(cur.trim());
-    return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
-  });
-};
-
 const fetchSheet = async name => {
   const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(name)}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Sheet "${name}" not found`);
-  return parseCSV(await res.text());
+  const rows = await res.json();
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => String(h).trim());
+  return rows.slice(1).map(row => Object.fromEntries(headers.map((h, i) => [h, row[i] ?? ""])));
 };
 
 const buildSystemPrompt = (details, context) => {

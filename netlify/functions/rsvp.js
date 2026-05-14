@@ -23,7 +23,7 @@ async function getAccessToken(serviceAccountJson) {
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth2:grant-type:jwt-bearer",
       assertion:  `${header}.${payload}.${signature}`,
-    }),
+    }).toString(),
   });
 
   const data = await res.json();

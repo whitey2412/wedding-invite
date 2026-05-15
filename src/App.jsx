@@ -376,7 +376,6 @@ export default function WeddingInvite() {
           {/* Form */}
           {rsvpStep === "form" && guestRecord && (
             <div style={{ width: "100%", maxWidth: 400 }}>
-              <p style={{ fontStyle: "italic", opacity: 0.65, margin: "0 0 6px", fontSize: 15, fontWeight: 300 }}>kindly reply</p>
               <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 12px", lineHeight: 1.05 }}>
                 Will you join us?
               </h2>

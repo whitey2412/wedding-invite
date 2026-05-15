@@ -21,6 +21,7 @@ const FALLBACK = {
     venue_name: "The Farm Yarra Valley",
     venue_location: "Warrandyte South, Victoria",
     dress_code: "Cocktail attire",
+    rsvp_deadline: "1 February 2027",
   },
   faqs: [
     { question: "Where can I stay?", answer: "The Yarra Valley has beautiful accommodation to suit all budgets — Healesville, Warrandyte, and Lilydale are all close by. Book early, April is lovely up here." },
@@ -326,6 +327,11 @@ export default function WeddingInvite() {
           }}>
             RSVP
           </button>
+          {details.rsvp_deadline && (
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 11, opacity: 0.52, margin: "10px 0 0", letterSpacing: "0.06em" }}>
+              Kindly reply by {details.rsvp_deadline}
+            </p>
+          )}
 
           <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.1em", fontSize: 10, opacity: 0.42, marginTop: 52, textTransform: "uppercase" }}>
             {details.dress_code}
@@ -371,9 +377,14 @@ export default function WeddingInvite() {
           {rsvpStep === "form" && guestRecord && (
             <div style={{ width: "100%", maxWidth: 400 }}>
               <p style={{ fontStyle: "italic", opacity: 0.65, margin: "0 0 6px", fontSize: 15, fontWeight: 300 }}>kindly reply</p>
-              <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 36px", lineHeight: 1.05 }}>
+              <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 12px", lineHeight: 1.05 }}>
                 Will you join us?
               </h2>
+              {details.rsvp_deadline && (
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 11, opacity: 0.52, margin: "0 0 28px", letterSpacing: "0.06em" }}>
+                  Kindly reply by {details.rsvp_deadline}
+                </p>
+              )}
               <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
                 {[
                   { name: guestRecord.p1_name, aKey: "p1_attending", dKey: "p1_dietary" },
@@ -491,6 +502,12 @@ export default function WeddingInvite() {
                 </div>
               );
             })}
+          </div>
+
+          <div style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid rgba(245,237,224,0.12)" }}>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 13, opacity: 0.65, lineHeight: 1.8, margin: 0 }}>
+              Still have a question? Reach out to us directly — and check back here as we'll keep adding to this as we get closer to the date.
+            </p>
           </div>
         </div>
       )}

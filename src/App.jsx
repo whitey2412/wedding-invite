@@ -154,7 +154,7 @@ export default function WeddingInvite() {
       const idx = rows.findIndex(r => r.invite_code?.trim() === inviteCode.trim());
       if (idx === -1) { setGuestRecord(false); return; }
       const r = rows[idx];
-      setGuestRecord({ p1_name: r.p1_name || "", p2_name: r.p2_name || "", row_index: idx + 2 });
+      setGuestRecord({ p1_name: r.p1_name || "", p2_name: r.p2_name || "", guest_facts: r.guest_facts || "", row_index: idx + 2 });
     }).catch(() => setGuestRecord(false));
   }, []);
 
@@ -168,40 +168,29 @@ export default function WeddingInvite() {
     if (!guestRecord) return;
     setRsvpStep("loading");
 
-    fetch("/api/rsvp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        invite_code:  inviteCode,
-        row_index:    guestRecord.row_index,
-        p1_attending: rsvp.p1_attending,
-        p1_dietary:   rsvp.p1_dietary,
-        p2_attending: guestRecord.p2_name ? rsvp.p2_attending : "",
-        p2_dietary:   guestRecord.p2_name ? rsvp.p2_dietary   : "",
-      }),
-    }).catch(() => {});
-
     const facts  = context.map(r => r.fact).join("; ");
     const guests = [
       { name: guestRecord.p1_name, attending: rsvp.p1_attending === "yes", dietary: rsvp.p1_dietary },
       ...(guestRecord.p2_name ? [{ name: guestRecord.p2_name, attending: rsvp.p2_attending === "yes", dietary: rsvp.p2_dietary }] : []),
     ];
-    const allYes  = guests.every(g => g.attending);
-    const allNo   = guests.every(g => !g.attending);
-    const nameStr = guests.length === 1 ? guests[0].name : `${guests[0].name} and ${guests[1].name}`;
-    const dietary = guests.filter(g => g.attending && g.dietary).map(g => `${g.name}: ${g.dietary}`).join("; ");
+    const allYes      = guests.every(g => g.attending);
+    const allNo       = guests.every(g => !g.attending);
+    const nameStr     = guests.length === 1 ? guests[0].name : `${guests[0].name} and ${guests[1].name}`;
+    const dietary     = guests.filter(g => g.attending && g.dietary).map(g => `${g.name}: ${g.dietary}`).join("; ");
+    const guestFacts  = guestRecord.guest_facts ? ` Fun facts about the guests: ${guestRecord.guest_facts}.` : "";
 
     let prompt;
     if (allYes) {
-      prompt = `Write a warm, funny 4-line rhyming poem welcoming ${nameStr} to ${details.partner1} & ${details.partner2}'s wedding at ${details.venue_name} on ${details.date_display}. Draw from these facts: ${facts}. Celebratory.${dietary ? ` Dietary notes: ${dietary}.` : ""} Return only the poem.`;
+      prompt = `Write a warm, funny 4-line rhyming poem welcoming ${nameStr} to ${details.partner1} & ${details.partner2}'s wedding at ${details.venue_name} on ${details.date_display}. Draw from these facts: ${facts}.${guestFacts} Celebratory.${dietary ? ` Dietary notes: ${dietary}.` : ""} Return only the poem.`;
     } else if (allNo) {
-      prompt = `Write a warm, funny 4-line rhyming poem for ${nameStr} who sadly cannot attend ${details.partner1} & ${details.partner2}'s wedding. Draw from: ${facts}. Sweet and sympathetic. Return only the poem.`;
+      prompt = `Write a warm, funny 4-line rhyming poem for ${nameStr} who sadly cannot attend ${details.partner1} & ${details.partner2}'s wedding. Draw from: ${facts}.${guestFacts} Sweet and sympathetic. Return only the poem.`;
     } else {
       const yes = guests.filter(g =>  g.attending).map(g => g.name).join(" and ");
       const no  = guests.filter(g => !g.attending).map(g => g.name).join(" and ");
-      prompt = `Write a warm, funny 4-line rhyming poem: ${yes} will celebrate at ${details.partner1} & ${details.partner2}'s wedding but ${no} sadly cannot make it. Draw from: ${facts}. Bittersweet but warm. Return only the poem.`;
+      prompt = `Write a warm, funny 4-line rhyming poem: ${yes} will celebrate at ${details.partner1} & ${details.partner2}'s wedding but ${no} sadly cannot make it. Draw from: ${facts}.${guestFacts} Bittersweet but warm. Return only the poem.`;
     }
 
+    let generatedPoem = "The Yarra Valley awaits.\nUntil then 🌿";
     try {
       const res = await fetch("/api/anthropic/v1/messages", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -211,11 +200,24 @@ export default function WeddingInvite() {
         }),
       });
       const data = await res.json();
-      setPoem(data.content?.[0]?.text || "You are the poem. See you there. 🌿");
-    } catch {
-      setPoem("The Yarra Valley awaits.\nUntil then 🌿");
-    }
+      generatedPoem = data.content?.[0]?.text || "You are the poem. See you there. 🌿";
+    } catch { /* use default poem */ }
+
+    setPoem(generatedPoem);
     setRsvpStep("poem");
+
+    fetch("/api/rsvp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        row_index:    guestRecord.row_index,
+        p1_attending: rsvp.p1_attending,
+        p1_dietary:   rsvp.p1_dietary,
+        p2_attending: guestRecord.p2_name ? rsvp.p2_attending : "",
+        p2_dietary:   guestRecord.p2_name ? rsvp.p2_dietary   : "",
+        poem:         generatedPoem,
+      }),
+    }).catch(() => {});
   };
 
   // ── Nav ───────────────────────────────────────────────────────────────────────

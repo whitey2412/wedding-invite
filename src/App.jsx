@@ -244,7 +244,30 @@ export default function WeddingInvite() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   if (sheetData === null) return (
-    <div style={{ background: TERRA, minHeight: "100vh" }} />
+    <div style={{ background: TERRA, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      <style>{`
+        @keyframes l-breathe { 0%,100%{opacity:0.18} 50%{opacity:0.38} }
+        @keyframes l-pulse   { 0%,100%{opacity:0.25} 50%{opacity:0.65} }
+      `}</style>
+      <svg viewBox="0 0 200 200" width="150" height="150" style={{ animation: "l-breathe 2.5s ease-in-out infinite" }}>
+        <g fill="none" stroke={CREAM} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          {[
+            "M 14 198 Q 38 158 55 118 Q 72 80 95 52",
+            "M 95 52 C 118 24 172 8 178 30 C 184 52 120 72 95 52 Z",
+            "M 68 84 C 46 60 6 62 6 82 C 6 102 44 108 68 84 Z",
+            "M 52 118 C 76 98 126 100 126 118 C 126 136 80 138 52 118 Z",
+            "M 36 154 C 14 136 2 154 5 172 C 8 190 34 182 36 154 Z",
+          ].map((d, i) => <path key={i} d={d} />)}
+        </g>
+      </svg>
+      <p style={{
+        color: CREAM, fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontSize: 52, fontWeight: 300, fontStyle: "italic",
+        margin: "-16px 0 0", animation: "l-pulse 2.5s ease-in-out infinite",
+      }}>
+        &amp;
+      </p>
+    </div>
   );
 
   return (

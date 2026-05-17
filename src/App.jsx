@@ -155,7 +155,18 @@ export default function WeddingInvite() {
       const idx = rows.findIndex(r => r.invite_code?.trim() === inviteCode.trim());
       if (idx === -1) { setGuestRecord(false); return; }
       const r = rows[idx];
-      setGuestRecord({ p1_name: r.p1_name || "", p2_name: r.p2_name || "", guest_facts: r.guest_facts || "", poem_yes: r.poem_yes || "", poem_no: r.poem_no || "", row_index: idx + 2 });
+      setGuestRecord({
+        p1_name:        r.p1_name        || "",
+        p2_name:        r.p2_name        || "",
+        guest_facts:    r.guest_facts    || "",
+        poem_yes:       r.poem_yes       || "",
+        poem_no:        r.poem_no        || "",
+        poem_generated: r.poem_generated || "",
+        p1_attending:   r.p1_attending   || "",
+        p2_attending:   r.p2_attending   || "",
+        responded_at:   r.responded_at   || "",
+        row_index: idx + 2,
+      });
     }).catch(() => setGuestRecord(false));
   }, []);
 
@@ -382,8 +393,36 @@ export default function WeddingInvite() {
             </div>
           )}
 
+          {/* Already responded */}
+          {rsvpStep === "form" && guestRecord && guestRecord.responded_at && (() => {
+            const allA = guestRecord.p1_attending === "Attending" && (!guestRecord.p2_name || guestRecord.p2_attending === "Attending");
+            const allD = guestRecord.p1_attending === "Declined"  && (!guestRecord.p2_name || guestRecord.p2_attending === "Declined");
+            const label = allA ? "See you at the Farm" : allD ? "You'll be greatly missed" : "See some of you there";
+            const msg   = guestRecord.poem_generated || (allA ? guestRecord.poem_yes : allD ? guestRecord.poem_no : "");
+            const names = [guestRecord.p1_name, guestRecord.p2_name].filter(Boolean).join(" & ");
+            return (
+              <div className="fade-up" style={{ textAlign: "center", maxWidth: 420 }}>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.45, marginBottom: 20 }}>
+                  RSVP received
+                </p>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.55, marginBottom: 24 }}>
+                  {label}
+                </p>
+                {msg && (
+                  <div style={{ fontSize: "clamp(17px, 3.5vw, 21px)", fontWeight: 300, lineHeight: 1.85, fontStyle: "italic", whiteSpace: "pre-line" }}>
+                    {msg}
+                  </div>
+                )}
+                <div style={{ width: 44, height: 1, background: CREAM, opacity: 0.28, margin: "32px auto" }} />
+                <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.1em", opacity: 0.45, textTransform: "uppercase" }}>
+                  {names} · {details.date_display}
+                </p>
+              </div>
+            );
+          })()}
+
           {/* Form */}
-          {rsvpStep === "form" && guestRecord && (
+          {rsvpStep === "form" && guestRecord && !guestRecord.responded_at && (
             <div style={{ width: "100%", maxWidth: 400 }}>
               <h2 style={{ fontSize: "clamp(38px,10vw,60px)", fontWeight: 300, margin: "0 0 12px", lineHeight: 1.05 }}>
                 Will you join us?

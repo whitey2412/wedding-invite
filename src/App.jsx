@@ -325,7 +325,7 @@ export default function WeddingInvite() {
           <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 14, opacity: 0.82, margin: "0 0 4px" }}>
             {details.venue_name}
           </p>
-          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 12, opacity: 0.55, margin: "0 0 40px" }}>
+          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 13, opacity: 0.72, margin: "0 0 40px" }}>
             {details.venue_location}
           </p>
 
@@ -334,7 +334,7 @@ export default function WeddingInvite() {
               {[["days", timeLeft.days],["hrs", timeLeft.hours],["min", timeLeft.mins],["sec", timeLeft.secs]].map(([label, val]) => (
                 <div key={label} style={{ textAlign: "center", minWidth: 44 }}>
                   <div style={{ fontSize: "clamp(30px, 8vw, 46px)", fontWeight: 300, lineHeight: 1 }}>{pad(val)}</div>
-                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.5, marginTop: 5 }}>{label}</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.65, marginTop: 5 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -353,7 +353,7 @@ export default function WeddingInvite() {
             </p>
           )}
 
-          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.1em", fontSize: 10, opacity: 0.42, marginTop: 52, textTransform: "uppercase" }}>
+          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.1em", fontSize: 13, opacity: 0.70, marginTop: 52, textTransform: "uppercase" }}>
             {details.dress_code}
           </p>
         </div>
@@ -402,10 +402,10 @@ export default function WeddingInvite() {
             const names = [guestRecord.p1_name, guestRecord.p2_name].filter(Boolean).join(" & ");
             return (
               <div className="fade-up" style={{ textAlign: "center", maxWidth: 420 }}>
-                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.45, marginBottom: 20 }}>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.14em", fontSize: 12, textTransform: "uppercase", opacity: 0.65, marginBottom: 20 }}>
                   RSVP received
                 </p>
-                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.55, marginBottom: 24 }}>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.14em", fontSize: 12, textTransform: "uppercase", opacity: 0.75, marginBottom: 24 }}>
                   {label}
                 </p>
                 {msg && (
@@ -414,7 +414,7 @@ export default function WeddingInvite() {
                   </div>
                 )}
                 <div style={{ width: 44, height: 1, background: CREAM, opacity: 0.28, margin: "32px auto" }} />
-                <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.1em", opacity: 0.45, textTransform: "uppercase" }}>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 400, letterSpacing: "0.1em", opacity: 0.65, textTransform: "uppercase" }}>
                   {names} · {details.date_display}
                 </p>
               </div>
@@ -481,7 +481,7 @@ export default function WeddingInvite() {
 
           {rsvpStep === "poem" && (
             <div className="fade-up" style={{ textAlign: "center", maxWidth: 420 }}>
-              <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 10, textTransform: "uppercase", opacity: 0.55, marginBottom: 24 }}>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.14em", fontSize: 12, textTransform: "uppercase", opacity: 0.75, marginBottom: 24 }}>
                 {(() => {
                   const attending = [rsvp.p1_attending === "yes", guestRecord?.p2_name && rsvp.p2_attending === "yes"].filter(Boolean).length;
                   const total     = guestRecord?.p2_name ? 2 : 1;
@@ -494,7 +494,7 @@ export default function WeddingInvite() {
                 {poem}
               </div>
               <div style={{ width: 44, height: 1, background: CREAM, opacity: 0.28, margin: "32px auto" }} />
-              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.1em", opacity: 0.45, textTransform: "uppercase" }}>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 400, letterSpacing: "0.1em", opacity: 0.65, textTransform: "uppercase" }}>
                 {[guestRecord?.p1_name, guestRecord?.p2_name].filter(Boolean).join(" & ")} · {details.date_display}
               </p>
             </div>
@@ -512,7 +512,7 @@ export default function WeddingInvite() {
           <Botanical pos="topRight" />
           <div style={{ paddingTop: 8 }}>
             <h2 style={{ margin: "0 0 6px", fontWeight: 300, fontSize: 32, lineHeight: 1 }}>Good questions</h2>
-            <p style={{ margin: "0 0 36px", fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 300, opacity: 0.52, letterSpacing: "0.06em" }}>
+            <p style={{ margin: "0 0 36px", fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: 400, opacity: 0.68, letterSpacing: "0.06em" }}>
               Everything you need to know
             </p>
           </div>

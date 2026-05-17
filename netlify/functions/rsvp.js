@@ -41,7 +41,7 @@ export default async function handler(req) {
     if (!res.ok) throw new Error(await res.text());
 
     if (poem) {
-      const poemRange = `rsvps!J${row_index}`;
+      const poemRange = `rsvps!L${row_index}`;
       await fetch(
         `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(poemRange)}?valueInputOption=USER_ENTERED`,
         {

@@ -319,7 +319,7 @@ export default function WeddingInvite() {
 
           <div style={{ width: 52, height: 1, background: CREAM, opacity: 0.35, marginBottom: 30 }} />
 
-          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, letterSpacing: "0.14em", fontSize: 11, textTransform: "uppercase", opacity: 0.65, margin: "0 0 8px", textAlign: "center" }}>
+          <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, letterSpacing: "0.14em", fontSize: 15, textTransform: "uppercase", opacity: 0.9, margin: "0 0 8px", textAlign: "center" }}>
             {details.date_display} · {details.time_display}
           </p>
           <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 14, opacity: 0.82, margin: "0 0 4px" }}>
@@ -348,7 +348,7 @@ export default function WeddingInvite() {
             RSVP
           </button>
           {details.rsvp_deadline && (
-            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 11, opacity: 0.52, margin: "10px 0 0", letterSpacing: "0.06em" }}>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, fontSize: 13, opacity: 0.78, margin: "10px 0 0", letterSpacing: "0.06em" }}>
               Kindly reply by {details.rsvp_deadline}
             </p>
           )}
@@ -428,7 +428,7 @@ export default function WeddingInvite() {
                 Will you join us?
               </h2>
               {details.rsvp_deadline && (
-                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: 11, opacity: 0.52, margin: "0 0 28px", letterSpacing: "0.06em" }}>
+                <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, fontSize: 13, opacity: 0.78, margin: "0 0 28px", letterSpacing: "0.06em" }}>
                   Kindly reply by {details.rsvp_deadline}
                 </p>
               )}

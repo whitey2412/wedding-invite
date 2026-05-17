@@ -446,7 +446,7 @@ export default function WeddingInvite() {
                 {(() => {
                   const attending = [rsvp.p1_attending === "yes", guestRecord?.p2_name && rsvp.p2_attending === "yes"].filter(Boolean).length;
                   const total     = guestRecord?.p2_name ? 2 : 1;
-                  if (attending === total) return "See you in the Yarra Valley 🌿";
+                  if (attending === total) return "See you at the Farm";
                   if (attending === 0)     return "You'll be greatly missed 🐾";
                   return "See some of you there 🌿";
                 })()}

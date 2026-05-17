@@ -438,7 +438,7 @@ export default function WeddingInvite() {
                   ...(guestRecord.p2_name ? [{ name: guestRecord.p2_name, aKey: "p2_attending", dKey: "p2_dietary" }] : []),
                 ].map(({ name, aKey, dKey }) => (
                   <div key={aKey}>
-                    <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.55, margin: "0 0 12px" }}>
+                    <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.8, margin: "0 0 12px" }}>
                       {name}
                     </p>
                     <div style={{ display: "flex", gap: 10, marginBottom: rsvp[aKey] === "yes" ? 10 : 0 }}>
